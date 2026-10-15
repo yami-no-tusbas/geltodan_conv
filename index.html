@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Convert Danbooru DText wiki pages to Gelbooru wiki markup, instantly in your browser. Free, private and mobile-friendly.">
+  <title>Booru Wiki Converter — Danbooru to Gelbooru</title>
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="./js/main.js"></script>
+</head>
+<body>
+  <main class="container">
+    <header class="site-header">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">⇄</div>
+        <div>
+          <h1>Booru Wiki Converter</h1>
+          <p class="subtitle" data-i18n="subtitle">Danbooru DText → Gelbooru wiki markup</p>
+        </div>
+      </div>
+      <div class="language-control">
+        <label for="language" data-i18n="language">Language</label>
+        <select id="language" aria-label="Language / Langue">
+          <option value="en">English</option>
+          <option value="fr">Français</option>
+        </select>
+      </div>
+    </header>
+
+    <p class="intro" data-i18n="intro">Paste your Danbooru wiki source, then copy the converted Gelbooru version. Everything happens on your device: no account, uploads, or tag lookups.</p>
+
+    <div class="settings" aria-label="Conversion settings">
+      <div class="setting">
+        <label for="heading-style" data-i18n="headingLabel">Headings</label>
+        <select id="heading-style">
+          <option value="compact" data-i18n="headingCompact">Compact (bold)</option>
+          <option value="preserve" data-i18n="headingLarge">Gelbooru heading tags</option>
+        </select>
+      </div>
+      <div class="setting">
+        <label for="list-style" data-i18n="listLabel">Lists</label>
+        <select id="list-style">
+          <option value="stars" data-i18n="listStars">Asterisks (*, **, ***)</option>
+          <option value="bullets" data-i18n="listBullets">Bullets and arrows</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="panels">
+      <section class="panel" aria-labelledby="source-title">
+        <div class="panel-heading">
+          <div>
+            <h2 id="source-title" data-i18n="sourceTitle">Danbooru source</h2>
+            <p data-i18n="sourceDescription">Copy from Danbooru's wiki editor.</p>
+          </div>
+          <div class="actions">
+            <button id="paste" class="button button-primary" type="button" data-i18n-title="pasteTitle" title="Paste from clipboard">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="18" rx="2"/><path d="M9 4V2h6v2M9 12h6m-3-3v6"/></svg>
+              <span data-i18n="paste">Paste</span>
+            </button>
+            <button id="clear" class="button button-secondary" type="button" data-i18n-title="clearTitle" title="Clear both fields">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 3h4m-8 4 1 14h10l1-14M10 11v6m4-6v6"/></svg>
+              <span data-i18n="clear">Clear</span>
+            </button>
+          </div>
+        </div>
+        <label class="visually-hidden" for="source" data-i18n="sourceTitle">Danbooru source</label>
+        <textarea id="source" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" data-i18n-placeholder="sourcePlaceholder" placeholder="Paste Danbooru DText here…"></textarea>
+        <div class="panel-footer"><span id="source-count">0 lines · 0 chars</span></div>
+      </section>
+
+      <section class="panel" aria-labelledby="result-title">
+        <div class="panel-heading">
+          <div>
+            <h2 id="result-title" data-i18n="resultTitle">Gelbooru result</h2>
+            <p data-i18n="resultDescription">Ready to paste into Gelbooru's wiki editor.</p>
+          </div>
+          <div class="actions">
+            <button id="copy" class="button button-primary" type="button" disabled data-i18n-title="copyTitle" title="Copy the full converted wiki">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>
+              <span data-i18n="copy">Copy</span>
+            </button>
+          </div>
+        </div>
+        <label class="visually-hidden" for="result" data-i18n="resultTitle">Gelbooru result</label>
+        <textarea id="result" readonly spellcheck="false" data-i18n-placeholder="resultPlaceholder" placeholder="The converted wiki will appear here…"></textarea>
+        <div class="panel-footer"><span id="result-count">0 lines · 0 chars</span><span id="status" role="status" aria-live="polite"></span></div>
+      </section>
+    </div>
+
+    <details id="warnings" class="warnings" hidden>
+      <summary><span data-i18n="warningsTitle">Conversion notes</span> <span id="warnings-count" class="warning-count"></span></summary>
+      <ul id="warnings-list"></ul>
+    </details>
+
+    <footer class="site-footer">
+      <p data-i18n="footer">Syntax conversion only. Tags are never checked or changed against Gelbooru's database. Review the result before publishing, especially image references and complex DText.</p>
+      <p data-i18n="openSource">Static and open-source friendly; works on GitHub Pages.</p>
+    </footer>
+  </main>
+</body>
+</html>
