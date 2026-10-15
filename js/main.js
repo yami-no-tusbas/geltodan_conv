@@ -1,156 +1,114 @@
-import { convertDText } from './converter.js?v=1.1.0';
+import { convertDText } from './converter.js?v=1.2.0';
+import { renderVisual, serializeVisual, insertWikiToken, replaceWikiToken, setLineFormat, normalizeVisualStructure } from './editor.js?v=1.2.0';
 
 const $ = id => document.getElementById(id);
-const elements = {
-  language: $('language'), source: $('source'), result: $('result'),
-  paste: $('paste'), clear: $('clear'), copy: $('copy'),
-  headingStyle: $('heading-style'), listStyle: $('list-style'),
-  sourceCount: $('source-count'), resultCount: $('result-count'),
-  status: $('status'), warnings: $('warnings'),
-  warningsList: $('warnings-list'), warningsCount: $('warnings-count'),
+const el = {
+  language:$('language'),source:$('source'), result:$('result'), visual:$('visual-editor'),
+  paste:$('paste'), clear:$('clear'),convert:$('convert'),copy:$('copy'),
+  headingStyle:$('heading-style'),listStyle:$('list-style'),
+  sourceCount:$('source-count'),resultCount:$('result-count'),
+  status:$('status'),sourceNotice:$('source-notice'),draftLabel:$('draft-label'),
+  warnings:$('warnings'),warningsList:$('warnings-list'),warningsCount:$('warnings-count'),
+  modeCode:$('mode-code'),modeEdit:$('mode-edit'),toolbar:$('visual-toolbar'),editorHelp:$('editor-help'),
 };
-const translations = {
-  en: {
-    subtitle: 'Danbooru DText → Gelbooru wiki markup', language: 'Language',
-    intro: 'Paste your Danbooru wiki source, then copy the converted Gelbooru version. Everything happens on your device: no account, uploads, or tag lookups.',
-    headingLabel: 'Headings', headingCompact: 'Compact (bold)', headingLarge: 'Gelbooru heading tags',
-    listLabel: 'Lists', listStars: 'Asterisks (*, **, ***)', listBullets: 'Bullets and arrows',
-    sourceTitle: 'Danbooru source', sourceDescription: "Copy from Danbooru’s wiki editor.",
-    resultTitle: 'Gelbooru result', resultDescription: 'Replace InsertPostID with real Gelbooru post IDs before publishing.',
-    paste: 'Paste', clear: 'Clear', copy: 'Copy',
-    pasteTitle: 'Paste from clipboard', clearTitle: 'Clear both fields', copyTitle: 'Copy the full converted wiki',
-    sourcePlaceholder: 'Paste Danbooru DText here…', resultPlaceholder: 'The converted wiki will appear here…',
-    warningsTitle: 'Conversion notes',
-    footer: 'Syntax conversion only. Tags are never checked against Gelbooru’s database. Review the result before publishing, especially image references and complex DText.',
-    openSource: 'Static and open-source friendly; works on GitHub Pages.',
-    lines: 'lines', chars: 'chars', copied: 'Copied!', pasted: 'Pasted!',
-    pasteFailed: 'Clipboard access blocked: tap the source field and paste manually.',
-    copyFailed: 'Could not copy automatically: select the result text and copy manually.',
-    warningsUnit: 'adaptations',
-  },
-  fr: {
-    subtitle: 'Danbooru DText → syntaxe wiki Gelbooru', language: 'Langue',
-    intro: 'Collez le code source d’un wiki Danbooru, puis copiez sa version Gelbooru. Tout reste dans votre navigateur : aucun compte, envoi de données ou contrôle des tags.',
-    headingLabel: 'Titres', headingCompact: 'Compact (gras)', headingLarge: 'Balises de titre Gelbooru',
-    listLabel: 'Listes', listStars: 'Astérisques (*, **, ***)', listBullets: 'Puces et flèches',
-    sourceTitle: 'Source Danbooru', sourceDescription: 'Copiez depuis l’éditeur wiki Danbooru.',
-    resultTitle: 'Résultat Gelbooru', resultDescription: 'Remplacez InsertPostID par les vrais IDs Gelbooru avant publication.',
-    paste: 'Coller', clear: 'Effacer', copy: 'Copier',
-    pasteTitle: 'Coller depuis le presse-papiers', clearTitle: 'Effacer les deux champs', copyTitle: 'Copier tout le wiki converti',
-    sourcePlaceholder: 'Collez le DText Danbooru ici…', resultPlaceholder: 'Le wiki converti apparaîtra ici…',
-    warningsTitle: 'Notes de conversion',
-    footer: 'Conversion de syntaxe uniquement. Aucune vérification des tags sur Gelbooru. Relisez avant publication, particulièrement les références aux images et les syntaxes DText complexes.',
-    openSource: 'Site statique adapté à GitHub Pages.',
-    lines: 'lignes', chars: 'caractères', copied: 'Copié !', pasted: 'Collé !',
-    pasteFailed: 'Accès au presse-papiers bloqué : touchez le champ source et collez manuellement.',
-    copyFailed: 'Copie automatique impossible : sélectionnez le résultat pour le copier manuellement.',
-    warningsUnit: 'adaptations',
-  },
+const translations={
+ en:{subtitle:'Danbooru DText → Gelbooru wiki markup',language:'Language',intro:'Paste a Danbooru wiki, adjust the Gelbooru result in Code View or Edit, then copy. No account, uploads or tag lookups.',
+ headingLabel:'Headings',headingCompact:'Compact (bold)',headingLarge:'Gelbooru heading tags',listLabel:'Lists',listStars:'Asterisks (*, **, ***)',listBullets:'Bullets and arrows',
+ sourceTitle:'Danbooru source',sourceDescription:"Copy from Danbooru’s wiki editor.",resultTitle:'Gelbooru result',resultDescription:'Your independent draft: edit freely, then copy to Gelbooru.',
+ paste:'Paste',clear:'Clear',copy:'Copy',convert:'Convert source',codeView:'Code View',editView:'Edit',editorHelp:'Tap a wiki link or post reference to edit its target. Unknown markup remains literal. Check Code View before publishing.',
+ pasteTitle:'Paste from clipboard',clearTitle:'Clear both fields',copyTitle:'Copy your current Gelbooru draft',sourcePlaceholder:'Paste Danbooru DText here…',resultPlaceholder:'Your Gelbooru wiki draft appears here…',
+ warningsTitle:'Conversion notes',footer:'Formatting only: no tag verification or media searches. Your edited Gelbooru draft is never replaced silently. Review before publishing.',openSource:'Static, private and GitHub Pages compatible.',
+ lines:'lines',chars:'chars',copied:'Copied!',pasted:'Pasted!',pasteFailed:'Clipboard access denied: paste manually into the source field.',copyFailed:'Automatic copy unavailable: select and copy in Code View.',warningsUnit:'adaptations',
+ sourceChanged:'Source changed — click Convert to replace the result.',dirty:'Edited draft',clean:'Converted draft',confirmReplace:'Replace your edited Gelbooru draft with a new conversion? This cannot be undone.',confirmClear:'Clear the source and the edited Gelbooru draft?',nothingToConvert:'Paste a Danbooru source first.',
+ toolHeading:'Heading H3',toolList:'Toggle list',toolIndent:'Increase list depth',toolOutdent:'Decrease list depth',toolWiki:'Insert wiki link',toolPost:'Insert post reference',toolSpoiler:'Spoiler',toolQuote:'Quote',undo:'Undo',redo:'Redo',
+ promptWiki:'Gelbooru wiki tag (spaces become underscores):',promptPost:'Gelbooru post ID (or InsertPostID):',promptToken:'Edit link or reference:',invalidToken:'Invalid ID or wiki link.',editUnavailable:'Switch to Edit first.'},
+ fr:{subtitle:'Danbooru DText → syntaxe wiki Gelbooru',language:'Langue',intro:'Collez un wiki Danbooru, retouchez le résultat Gelbooru dans Code View ou Edit, puis copiez. Aucun compte, envoi de données ou contrôle des tags.',
+ headingLabel:'Titres',headingCompact:'Compact (gras)',headingLarge:'Balises de titre Gelbooru',listLabel:'Listes',listStars:'Astérisques (*, **, ***)',listBullets:'Puces et flèches',
+ sourceTitle:'Source Danbooru',sourceDescription:'Copiez depuis l’éditeur wiki Danbooru.',resultTitle:'Résultat Gelbooru',resultDescription:'Brouillon indépendant : modifiez-le, puis copiez dans Gelbooru.',
+ paste:'Coller',clear:'Effacer',copy:'Copier',convert:'Convertir la source',codeView:'Code View',editView:'Édition',editorHelp:'Touchez un lien wiki ou une référence de post pour modifier sa cible. Les syntaxes inconnues restent du texte. Vérifiez Code View avant publication.',
+ pasteTitle:'Coller depuis le presse-papiers',clearTitle:'Effacer les deux champs',copyTitle:'Copier le brouillon Gelbooru actuel',sourcePlaceholder:'Collez le DText Danbooru ici…',resultPlaceholder:'Votre brouillon Gelbooru apparaîtra ici…',
+ warningsTitle:'Notes de conversion',footer:'Mise en forme uniquement : ni vérification des tags ni recherche de médias. Le brouillon édité n’est jamais remplacé sans avertissement. Relisez avant publication.',openSource:'Statique, privé et compatible GitHub Pages.',
+ lines:'lignes',chars:'caractères',copied:'Copié !',pasted:'Collé !',pasteFailed:'Accès au presse-papiers refusé : collez manuellement dans le champ source.',copyFailed:'Copie automatique impossible : sélectionnez le texte dans Code View.',warningsUnit:'adaptations',
+ sourceChanged:'Source modifiée — cliquez sur Convertir pour remplacer le résultat.',dirty:'Brouillon modifié',clean:'Brouillon converti',confirmReplace:'Remplacer vos retouches Gelbooru par une nouvelle conversion ? Cette opération est irréversible.',confirmClear:'Effacer la source et le brouillon Gelbooru modifié ?',nothingToConvert:'Collez une source Danbooru.',
+ toolHeading:'Titre H3',toolList:'Activer une liste',toolIndent:'Augmenter la profondeur',toolOutdent:'Réduire la profondeur',toolWiki:'Insérer un lien wiki',toolPost:'Insérer un lien de post',toolSpoiler:'Spoiler',toolQuote:'Citation',undo:'Annuler',redo:'Rétablir',
+ promptWiki:'Tag wiki Gelbooru (espaces transformés en underscores) :',promptPost:'ID du post Gelbooru (ou InsertPostID) :',promptToken:'Modifier le lien ou la référence :',invalidToken:'ID ou lien wiki incorrect.',editUnavailable:'Passez en mode Édition.'}
 };
-const warningTranslations = {
-  fr: {
-    literal: 'Les blocs de code / texte littéral ont été conservés sans mise en forme.',
-    toc: 'Sommaire Danbooru retiré : ses ancres ne fonctionneraient pas sur Gelbooru.',
-    expand: 'Blocs repliables transformés en texte visible.',
-    tables: 'Tableaux convertis en lignes de texte ; la disposition des cellules fusionnées peut être perdue.',
-    media: 'Références aux images Danbooru remplacées par [post]InsertPostID[/post] : choisissez un ID de post Gelbooru.',
-    'unsupported-style': 'Soulignement et styles de notes simplifiés en texte ordinaire.',
-    anchors: 'Ancres et liens internes à des sections supprimés ou simplifiés.',
-    annotations: 'Notes Danbooru conservées en texte ordinaire.',
-    labels: 'Libellés personnalisés des liens wiki déplacés dans le texte.',
-    'external-labels': 'Liens externes avec libellé remplacés par un texte suivi de son URL.',
-    'search-labels': 'Libellés personnalisés des recherches de tags simplifiés.',
-    'danbooru-ids': 'Références numériques Danbooru transformées en URL complètes.',
+const warningTranslations={fr:{literal:'Blocs de code DText conservés comme texte.',toc:'Sommaire à ancres Danbooru supprimé.',expand:'Blocs repliables dépliés en texte.',tables:'Tableaux transformés en lignes de texte.',media:'Images Danbooru remplacées par des références [post]InsertPostID[/post].','unsupported-style':'Styles non disponibles simplifiés.',anchors:'Ancres internes retirées.',annotations:'Notes préservées en texte.',labels:'Libellés personnalisés préservés hors des liens.','external-labels':'Liens URL simplifiés en texte + URL.','search-labels':'Libellés de recherches simplifiés.','danbooru-ids':'Identifiants Danbooru transformés en URL.'}};
+let language=(navigator.language||'en').toLowerCase().startsWith('fr')?'fr':'en';
+let draft='',baseline='',lastConvertedSource='',mode='code',latestWarnings=[];
+let history=[''],historyPos=0,sourceChanged=false,savedRange=null;
+const tr=k=>translations[language][k]??k;
+const countLabel=s=>`${s?(s.split('\n').length).toLocaleString(language):0} ${tr('lines')} · ${s.length.toLocaleString(language)} ${tr('chars')}`;
+const setStatus=s=>{el.status.textContent=s};
+const modified=()=>draft!==baseline;
+function showDraftInfo(){el.draftLabel.textContent=draft?(modified()?tr('dirty'):tr('clean')):'';el.draftLabel.classList.toggle('modified',modified());el.copy.disabled=!draft;el.resultCount.textContent=countLabel(draft);}
+function showSourceInfo(){el.sourceCount.textContent=countLabel(el.source.value);el.sourceNotice.textContent=sourceChanged?tr('sourceChanged'):'';}
+function renderWarnings(){el.warningsList.replaceChildren();el.warnings.hidden=!latestWarnings.length;el.warningsCount.textContent=latestWarnings.length?`(${latestWarnings.reduce((n,x)=>n+x.count,0)} ${tr('warningsUnit')})`:'';for(const w of latestWarnings){const item=document.createElement('li');item.textContent=`${warningTranslations[language]?.[w.code]||w.message} (${w.count})`;el.warningsList.append(item);}}
+function saveDraft(value, resetHistory=false){draft=value;el.result.value=draft;if(resetHistory){history=[draft];historyPos=0;}else if(draft!==history[historyPos]){history=history.slice(0,historyPos+1);history.push(draft);if(history.length>60)history.shift();historyPos=history.length-1;}showDraftInfo();}
+function applyHistory(direction){const next=historyPos+direction;if(next<0||next>=history.length)return;historyPos=next;draft=history[historyPos];el.result.value=draft;if(mode==='edit')renderVisual(el.visual,draft);showDraftInfo();}
+function switchMode(next){if(next===mode)return;if(mode==='edit'){const now=serializeVisual(el.visual);if(now!==draft)saveDraft(now);}mode=next;el.result.hidden=mode!=='code';el.visual.hidden=mode!=='edit';el.toolbar.hidden=mode!=='edit';el.editorHelp.hidden=mode!=='edit';el.modeCode.classList.toggle('is-selected',mode==='code');el.modeEdit.classList.toggle('is-selected',mode==='edit');el.modeCode.setAttribute('aria-pressed',String(mode==='code'));el.modeEdit.setAttribute('aria-pressed',String(mode==='edit'));if(mode==='edit')renderVisual(el.visual,draft);savedRange=null;}
+function conversion(ask=true){const input=el.source.value;if(!input.trim()){setStatus(tr('nothingToConvert'));return false;}if(ask&&modified()&&!window.confirm(tr('confirmReplace')))return false;const result=convertDText(input,{headings:el.headingStyle.value,lists:el.listStyle.value});baseline=result.code;lastConvertedSource=input;sourceChanged=false;latestWarnings=result.warnings;saveDraft(result.code,true);if(mode==='edit')renderVisual(el.visual,draft);showSourceInfo();renderWarnings();setStatus('');return true;}
+async function pasteFromClipboard(){try{if(!navigator.clipboard?.readText)throw Error('No Clipboard API');const text=await navigator.clipboard.readText();if(modified()&&!window.confirm(tr('confirmReplace')))return;el.source.value=text;sourceChanged=true;showSourceInfo();if(conversion(false))setStatus(tr('pasted'));}catch{setStatus(tr('pasteFailed'));el.source.focus();}}
+async function copyToClipboard(){if(mode==='edit'){const now=serializeVisual(el.visual);if(now!==draft)saveDraft(now);}try{if(!navigator.clipboard?.writeText)throw Error('No Clipboard API');await navigator.clipboard.writeText(draft);setStatus(tr('copied'));}catch{switchMode('code');el.result.focus();el.result.select();setStatus(tr('copyFailed'));}}
+function setLanguage(lang){language=lang==='fr'?'fr':'en';document.documentElement.lang=language;el.language.value=language;for(const e of document.querySelectorAll('[data-i18n]'))e.textContent=tr(e.dataset.i18n);for(const e of document.querySelectorAll('[data-i18n-title]'))e.title=tr(e.dataset.i18nTitle);for(const e of document.querySelectorAll('[data-i18n-placeholder]'))e.placeholder=tr(e.dataset.i18nPlaceholder);showSourceInfo();showDraftInfo();renderWarnings();}
+// Keep selection when a toolbar button receives focus.
+document.addEventListener('selectionchange',()=>{const s=window.getSelection();if(s?.rangeCount&&el.visual.contains(s.anchorNode))savedRange=s.getRangeAt(0).cloneRange();});
+function restoreSelection(){el.visual.focus();const selection=window.getSelection();if(savedRange&&el.visual.contains(savedRange.commonAncestorContainer)){selection.removeAllRanges();selection.addRange(savedRange);return true;}if(!selection.rangeCount||!el.visual.contains(selection.anchorNode)){const range=document.createRange();const line=el.visual.lastElementChild||el.visual;range.selectNodeContents(line);range.collapse(false);selection.removeAllRanges();selection.addRange(range);}return true;}
+function visualSync(){normalizeVisualStructure(el.visual);const text=serializeVisual(el.visual);if(text!==draft)saveDraft(text);setStatus('');}
+function wrapSelection(tag){const sel=window.getSelection();if(!sel?.rangeCount)return;const range=sel.getRangeAt(0);if(!el.visual.contains(range.commonAncestorContainer))return;const node=document.createElement('span');node.dataset.bbTag=tag;node.className=tag==='spoiler'?'wiki-spoiler':'wiki-quote';try{const content=range.extractContents();node.append(content);range.insertNode(node);range.selectNodeContents(node);sel.removeAllRanges();sel.addRange(range);}catch{setStatus(tr('invalidToken'));}}
+function executeAction(action){if(action==='undo'||action==='redo'){applyHistory(action==='undo'?-1:1);return;}if(mode!=='edit'){setStatus(tr('editUnavailable'));return;}restoreSelection();const sel=window.getSelection();const selection=sel?.rangeCount?sel.getRangeAt(0):null;
+  if(['bold','italic','strike'].includes(action)){
+    document.execCommand(action==='strike'?'strikeThrough':action,false,null);
+  } else if(action==='heading'||action==='list'||action==='indent'||action==='outdent'){
+    const line=sel?.anchorNode?.parentElement?.closest('.wiki-line');
+    const level=Number(line?.dataset.lineLevel||0);
+    if(action==='heading')setLineFormat(el.visual,'heading',3,selection);
+    if(action==='list')setLineFormat(el.visual,'list',Math.max(level,1),selection);
+    if(action==='indent')setLineFormat(el.visual,'list',Math.min(level+1,12),selection);
+    if(action==='outdent')setLineFormat(el.visual,'list',Math.max(level-1,1),selection);
+  } else if(action==='wiki'||action==='post'){
+    const name=window.prompt(action==='wiki'?tr('promptWiki'):tr('promptPost'),action==='wiki'?'':'InsertPostID');
+    if(name===null)return;
+    const value=name.trim();
+    if(!value||/[\[\]\r\n]/.test(value)||(action==='post'&&value!=='InsertPostID'&&!/^\d+$/.test(value))){setStatus(tr('invalidToken'));return;}
+    const raw=action==='wiki'?`[[${value.replace(/\s+/g,'_')}]]`:`[post]${value}[/post]`;
+    if(!insertWikiToken(el.visual,raw)){setStatus(tr('invalidToken'));return;}
+  } else if(action==='spoiler'||action==='quote'){
+    wrapSelection(action);
   }
-};
-let language = (navigator.language || 'en').toLowerCase().startsWith('fr') ? 'fr' : 'en';
-let latestWarnings = [];
-let pending = null;
-function tr(key) { return translations[language][key] ?? key; }
-function countLabel(s) {
-  const lines = s.length ? s.split('\n').length : 0;
-  return `${lines.toLocaleString(language)} ${tr('lines')} · ${s.length.toLocaleString(language)} ${tr('chars')}`;
+  visualSync();
 }
-function setStatus(value) {
-  elements.status.textContent = value;
-}
-function renderWarnings() {
-  elements.warningsList.replaceChildren();
-  elements.warnings.hidden = latestWarnings.length === 0;
-  elements.warningsCount.textContent = latestWarnings.length ? `(${latestWarnings.reduce((a, w) => a + w.count, 0)} ${tr('warningsUnit')})` : '';
-  for (const w of latestWarnings) {
-    const li = document.createElement('li');
-    li.textContent = `${warningTranslations[language]?.[w.code] || w.message} (${w.count})`;
-    elements.warningsList.append(li);
-  }
-}
-function convert() {
-  clearTimeout(pending);
-  pending = null;
-  const result = convertDText(elements.source.value, {
-    headings: elements.headingStyle.value,
-    lists: elements.listStyle.value,
-  });
-  elements.result.value = result.code;
-  latestWarnings = result.warnings;
-  elements.copy.disabled = !result.code;
-  elements.sourceCount.textContent = countLabel(elements.source.value);
-  elements.resultCount.textContent = countLabel(result.code);
-  renderWarnings();
-}
-function scheduleConversion() {
-  clearTimeout(pending);
-  setStatus('');
-  pending = setTimeout(convert, 110);
-}
-function setLanguage(value) {
-  language = value === 'fr' ? 'fr' : 'en';
-  document.documentElement.lang = language;
-  elements.language.value = language;
-  for (const elem of document.querySelectorAll('[data-i18n]')) elem.textContent = tr(elem.dataset.i18n);
-  for (const elem of document.querySelectorAll('[data-i18n-title]')) elem.title = tr(elem.dataset.i18nTitle);
-  for (const elem of document.querySelectorAll('[data-i18n-placeholder]')) elem.placeholder = tr(elem.dataset.i18nPlaceholder);
-  elements.sourceCount.textContent = countLabel(elements.source.value);
-  elements.resultCount.textContent = countLabel(elements.result.value);
-  renderWarnings();
-}
-async function pasteFromClipboard() {
-  try {
-    if (!navigator.clipboard?.readText) throw new Error('Clipboard API unavailable');
-    const source = await navigator.clipboard.readText();
-    elements.source.value = source;
-    convert();
-    setStatus(tr('pasted'));
-  } catch {
-    setStatus(tr('pasteFailed'));
-    elements.source.focus();
-  }
-}
-async function copyToClipboard() {
-  // Finish any pending conversion so the copy action always gets fresh output.
-  if (pending !== null) convert();
-  try {
-    if (!navigator.clipboard?.writeText) throw new Error('Clipboard API unavailable');
-    await navigator.clipboard.writeText(elements.result.value);
-    setStatus(tr('copied'));
-  } catch {
-    setStatus(tr('copyFailed'));
-    elements.result.focus();
-    elements.result.select();
-  }
-}
-elements.paste.addEventListener('click', pasteFromClipboard);
-elements.copy.addEventListener('click', copyToClipboard);
-elements.clear.addEventListener('click', () => {
-  elements.source.value = '';
-  elements.result.value = '';
-  setStatus('');
-  convert();
-  elements.source.focus();
+el.modeCode.addEventListener('click',()=>switchMode('code'));
+el.modeEdit.addEventListener('click',()=>switchMode('edit'));
+el.language.addEventListener('change',()=>setLanguage(el.language.value));
+el.paste.addEventListener('click',pasteFromClipboard);
+el.copy.addEventListener('click',copyToClipboard);
+el.convert.addEventListener('click',()=>conversion());
+el.clear.addEventListener('click',()=>{if(modified()&&!window.confirm(tr('confirmClear')))return;el.source.value='';baseline='';lastConvertedSource='';latestWarnings=[];sourceChanged=false;saveDraft('',true);if(mode==='edit')renderVisual(el.visual,'');showSourceInfo();renderWarnings();setStatus('');el.source.focus();});
+el.source.addEventListener('input',event=>{sourceChanged=el.source.value!==lastConvertedSource;showSourceInfo();setStatus('');if(event.inputType==='insertFromPaste'&&el.source.value.trim())conversion();});
+for(const item of [el.headingStyle,el.listStyle])item.addEventListener('change',()=>{if(el.source.value!==lastConvertedSource)sourceChanged=true;showSourceInfo();});
+el.result.addEventListener('input',()=>{saveDraft(el.result.value);setStatus('');});
+el.visual.addEventListener('input',visualSync);
+el.visual.addEventListener('paste',event=>{const t=event.clipboardData?.getData('text/plain');if(t===undefined)return;event.preventDefault();document.execCommand('insertText',false,t);visualSync();});
+el.visual.addEventListener('click',event=>{
+  const token=event.target.closest?.('[data-wiki-token]');if(!token)return;
+  const kind=token.dataset.tokenKind;
+  const raw=token.dataset.wikiToken;
+  const original=kind==='wiki'||kind==='search'?raw.slice(2,-2):raw.replace(/^\[[^\]]+\]|\[\/[^\]]+\]$/g,'');
+  const entered=window.prompt(tr('promptToken'),original);
+  if(entered===null)return;
+  if(!replaceWikiToken(token,entered)){setStatus(tr('invalidToken'));return;}visualSync();
 });
-elements.source.addEventListener('input', scheduleConversion);
-elements.headingStyle.addEventListener('change', convert);
-elements.listStyle.addEventListener('change', convert);
-elements.language.addEventListener('change', () => setLanguage(elements.language.value));
-setLanguage(language);
-convert();
+el.visual.addEventListener('keydown',event=>{
+  if((event.ctrlKey||event.metaKey)&&!event.altKey&&event.key.toLowerCase()==='z'){
+    event.preventDefault();applyHistory(event.shiftKey?1:-1);
+  }else if((event.ctrlKey||event.metaKey)&&!event.altKey&&event.key.toLowerCase()==='y'){
+    event.preventDefault();applyHistory(1);
+  }else if((event.key==='Enter')&&!event.shiftKey){
+    // Default contenteditable split may inherit list attributes. Retain level.
+    setTimeout(()=>{normalizeVisualStructure(el.visual);visualSync();},0);
+  }
+});
+el.toolbar.addEventListener('pointerdown',event=>{if(event.target.closest('button'))event.preventDefault();});
+el.toolbar.addEventListener('click',event=>{const btn=event.target.closest('button[data-action]');if(btn)executeAction(btn.dataset.action);});
+setLanguage(language);showSourceInfo();showDraftInfo();

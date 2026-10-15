@@ -7,7 +7,7 @@
   <meta name="description" content="Convert Danbooru DText wiki pages to Gelbooru wiki markup, instantly in your browser. Free, private and mobile-friendly.">
   <title>Booru Wiki Converter — Danbooru to Gelbooru</title>
   <link rel="stylesheet" href="./style.css">
-  <script type="module" src="./js/main.js?v=1.1.0"></script>
+  <script type="module" src="./js/main.js?v=1.2.0"></script>
 </head>
 <body>
   <main class="container">
@@ -28,7 +28,7 @@
       </div>
     </header>
 
-    <p class="intro" data-i18n="intro">Paste your Danbooru wiki source, then copy the converted Gelbooru version. Everything happens on your device: no account, uploads, or tag lookups.</p>
+    <p class="intro" data-i18n="intro">Paste your Danbooru wiki source, edit it visually or as code, then copy your finished Gelbooru version. Everything happens on your device: no account, uploads, or tag lookups.</p>
 
     <div class="settings" aria-label="Conversion settings">
       <div class="setting">
@@ -65,6 +65,10 @@
             </button>
           </div>
         </div>
+        <div class="source-utilities">
+          <button id="convert" class="button button-secondary" type="button" data-i18n="convert">Convert source</button>
+          <span id="source-notice" class="draft-notice" aria-live="polite"></span>
+        </div>
         <label class="visually-hidden" for="source" data-i18n="sourceTitle">Danbooru source</label>
         <textarea id="source" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" data-i18n-placeholder="sourcePlaceholder" placeholder="Paste Danbooru DText here…"></textarea>
         <div class="panel-footer"><span id="source-count">0 lines · 0 chars</span></div>
@@ -83,8 +87,37 @@
             </button>
           </div>
         </div>
-        <label class="visually-hidden" for="result" data-i18n="resultTitle">Gelbooru result</label>
-        <textarea id="result" readonly spellcheck="false" data-i18n-placeholder="resultPlaceholder" placeholder="The converted wiki will appear here…"></textarea>
+        <div class="result-workspace">
+          <div class="editor-topline">
+            <div class="mode-switch" role="group" aria-label="Editor mode">
+              <button type="button" id="mode-code" class="mode-button is-selected" aria-pressed="true" data-i18n="codeView">Code View</button>
+              <button type="button" id="mode-edit" class="mode-button" aria-pressed="false" data-i18n="editView">Edit</button>
+            </div>
+            <span id="draft-label" class="draft-label" aria-live="polite"></span>
+          </div>
+          <div id="visual-toolbar" class="editor-toolbar" role="toolbar" aria-label="Visual wiki formatting" hidden>
+            <button type="button" data-action="bold" title="Bold" aria-label="Bold"><b>B</b></button>
+            <button type="button" data-action="italic" title="Italic" aria-label="Italic"><i>I</i></button>
+            <button type="button" data-action="strike" title="Strikethrough" aria-label="Strikethrough"><s>S</s></button>
+            <span class="tool-separator" aria-hidden="true"></span>
+            <button type="button" data-action="heading" title="Toggle heading" data-i18n-title="toolHeading">H3</button>
+            <button type="button" data-action="list" title="Toggle list" data-i18n-title="toolList">• List</button>
+            <button type="button" data-action="indent" title="Increase list depth" data-i18n-title="toolIndent">→</button>
+            <button type="button" data-action="outdent" title="Decrease list depth" data-i18n-title="toolOutdent">←</button>
+            <span class="tool-separator" aria-hidden="true"></span>
+            <button type="button" data-action="wiki" data-i18n-title="toolWiki" title="Wiki link">[[ ]]</button>
+            <button type="button" data-action="post" data-i18n-title="toolPost" title="Post reference">Post</button>
+            <button type="button" data-action="spoiler" data-i18n-title="toolSpoiler" title="Spoiler">Spoiler</button>
+            <button type="button" data-action="quote" data-i18n-title="toolQuote" title="Quote">Quote</button>
+            <span class="tool-separator" aria-hidden="true"></span>
+            <button type="button" data-action="undo" data-i18n-title="undo" title="Undo">↶</button>
+            <button type="button" data-action="redo" data-i18n-title="redo" title="Redo">↷</button>
+          </div>
+          <label class="visually-hidden" for="result" data-i18n="resultTitle">Gelbooru result</label>
+          <textarea id="result" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" data-i18n-placeholder="resultPlaceholder" placeholder="The converted wiki will appear here…"></textarea>
+          <div id="visual-editor" class="visual-editor" contenteditable="true" spellcheck="false" role="textbox" aria-multiline="true" aria-label="Gelbooru visual wiki editor" hidden></div>
+          <p class="editor-help" id="editor-help" data-i18n="editorHelp" hidden>Tap a wiki link or post reference to change it. Unknown markup is kept as text; check Code View before publishing.</p>
+        </div>
         <div class="panel-footer"><span id="result-count">0 lines · 0 chars</span><span id="status" role="status" aria-live="polite"></span></div>
       </section>
     </div>
@@ -96,7 +129,7 @@
 
     <footer class="site-footer">
       <p data-i18n="footer">Syntax conversion only. Tags are never checked or changed against Gelbooru's database. Review the result before publishing, especially image references and complex DText.</p>
-      <p><span data-i18n="openSource">Static and open-source friendly; works on GitHub Pages.</span> · v1.1.0</p>
+      <p><span data-i18n="openSource">Static and open-source friendly; works on GitHub Pages.</span> · v1.2.0</p>
     </footer>
   </main>
 </body>

@@ -87,3 +87,45 @@ textarea[readonly] { cursor: text; }
   #status { color: #86dfb0; }
   .warnings { border-color: #795a2f; }
 }
+/* Editable Gelbooru result — clean mobile-first controls. */
+.source-utilities { display:flex; padding:0 18px 12px; align-items:center; gap:12px; flex-wrap:wrap; }
+.draft-notice { color:var(--warning); font-size:.79rem; }
+.result-workspace { display:flex; flex-direction:column; flex:1; min-height:0; }
+.editor-topline { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:0 18px 10px; flex-wrap:wrap; }
+.mode-switch { display:flex; align-items:center; border:1px solid var(--border); background:var(--bg); border-radius:10px; padding:3px; }
+.mode-button { font:inherit; font-size:.86rem; font-weight:650; padding:6px 13px; border:0; border-radius:7px; background:transparent; color:var(--muted); cursor:pointer; min-height:35px; }
+.mode-button.is-selected { background:var(--surface); color:var(--accent); box-shadow:0 1px 4px #0002; }
+.draft-label { font-size:.78rem; color:var(--muted); }
+.draft-label.modified { color:var(--warning); font-weight:650; }
+.editor-toolbar { display:flex; gap:5px; flex-wrap:wrap; padding:0 18px 10px; }
+.editor-toolbar[hidden] {display:none}
+.editor-toolbar button { font:inherit; font-size:.82rem; font-weight:650; min-height:35px; min-width:35px; padding:6px 9px; background:var(--surface); color:var(--text); border:1px solid var(--border); border-radius:7px; cursor:pointer; touch-action:manipulation; }
+.editor-toolbar button:hover { background:var(--bg); }
+.editor-toolbar button:focus-visible, .mode-button:focus-visible, .wiki-token:focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
+.tool-separator { width:1px; background:var(--border); margin:3px 3px; }
+.visual-editor { width:calc(100% - 36px); align-self:center; min-height:460px; height:min(63vh,700px); overflow:auto; resize:vertical; background:var(--input); color:var(--text); border:1px solid var(--border); border-radius:9px; padding:16px; font:14px/1.7 ui-sans-serif,system-ui,sans-serif; white-space:pre-wrap; overflow-wrap:anywhere; outline-offset:2px; }
+.visual-editor[hidden] {display:none}
+.wiki-line { min-height:1.7em; position:relative; }
+.wiki-line-list, .wiki-line-bullet { padding-left:calc(22px + var(--depth,0) * 22px); }
+.wiki-line-list::before,.wiki-line-bullet::before { content:'•'; position:absolute; left:calc(6px + var(--depth,0) * 22px); color:var(--muted); }
+.wiki-line-list[data-line-level="2"]::before,.wiki-line-bullet[data-line-level="2"]::before {content:'◦'}
+.wiki-line-list[data-line-level="3"]::before,.wiki-line-bullet[data-line-level="3"]::before {content:'▪'}
+.wiki-line-heading { font-weight:750; margin-block:.15em; }
+.wiki-line-heading[data-line-level="1"] {font-size:1.6em}
+.wiki-line-heading[data-line-level="2"] {font-size:1.4em}
+.wiki-line-heading[data-line-level="3"] {font-size:1.18em}
+.wiki-line-heading[data-line-level="4"] {font-size:1.08em}
+.wiki-token { color:var(--accent); border-radius:5px; padding:0 3px; cursor:pointer; background:color-mix(in srgb,var(--accent) 9%,transparent); white-space:normal; }
+.token-post, .token-forum { border:1px solid var(--border); background:var(--surface); font-size:.93em; }
+.wiki-spoiler { color:transparent; background:var(--text); border-radius:3px; padding:0 3px; }
+.wiki-spoiler:hover,.wiki-spoiler:focus-within { color:var(--text); background:var(--border); }
+.wiki-quote { border-left:3px solid var(--accent); background:var(--bg); padding:0 5px; }
+.editor-help { padding:7px 18px 2px; color:var(--muted); font-size:.75rem; }
+#result[hidden] {display:none}
+@media (max-width:850px) { .visual-editor {height:315px; min-height:175px;} }
+@media (max-width:500px) {
+ .source-utilities {padding:0 12px 10px}
+ .editor-topline,.editor-toolbar {padding-left:12px;padding-right:12px}
+ .visual-editor {width:calc(100% - 24px);padding:10px;min-height:255px;height:285px;font-size:14px}
+ .editor-toolbar button {min-width:38px; min-height:39px}
+}

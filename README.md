@@ -1,15 +1,27 @@
 # Booru Wiki Converter
 
-Version **1.1.0**. A tiny, fully static **Danbooru DText → Gelbooru Wiki** converter. Suitable for GitHub Pages and tablets/phones. The interface is available in English and French.
+Version **1.2.0**. A tiny, fully static **Danbooru DText → Gelbooru Wiki** converter. Suitable for GitHub Pages and tablets/phones. The interface is available in English and French.
 
 ## Use
 
 1. Open a Danbooru wiki edit page, and copy the DText source.
 2. On the converter website, tap **Paste** (or manually paste into the left field).
-3. Review the automatically converted Gelbooru markup; tap **Copy**.
-4. Paste it into a Gelbooru wiki edit page and make any necessary editorial adjustments.
+3. Switch the result between **Code View** (editable BBCode) and **Edit** (visual editing). Make your corrections, then tap **Copy**.
+4. Paste your finished text into the Gelbooru wiki editor.
 
 No login, server, database, API calls, tag checks, or uploads. The pasted text stays in the browser. Your browser may ask permission to *read* the clipboard; if denied, manual paste still works. Clipboard access requires HTTPS (provided by GitHub Pages), or localhost for local testing.
+
+## Visual editor (v1.2.0)
+
+- **Code View** is an editable textarea containing exactly the Gelbooru BBCode that the Copy button uses.
+- **Edit** displays headings, bold/italic/strike, hierarchical lists, editable wiki/search/post/forum tokens, inline quotes and spoilers where safely representable. Tap a link or post badge to edit its underlying target / ID.
+- The visual toolbar provides formatting, a heading, list levels, wiki links, post references, quote, spoiler, and undo/redo. It can be used on tablets with touch controls.
+- **Independent draft**: conversion settings and typing into the Danbooru source never rewrite the Gelbooru result. Pasting a new Danbooru source requests confirmation before replacing modified output. The **Convert source** button explicitly regenerates output, also with confirmation if modified.
+- **Copy** always copies the current (possibly manually edited) Gelbooru BBCode. The Danbooru input never changes when editing Gelbooru output.
+- Unknown / malformed / multiline markup is kept as literal text in the visual editor so it can be reviewed and edited in Code View, not guessed or silently deleted.
+- The browser's ordinary clipboard rules apply. No persistent storage of wiki content is performed; save the finished output in Gelbooru before leaving the page.
+
+**Known limitations:** The visual editor is deliberately conservative; it is not a full implementation of Gelbooru's renderer. Advanced nested / multiline markup may be displayed as literal BBCode. Editing long text across line breaks with a phone's virtual keyboard can vary by browser. Always check Code View before publishing.
 
 ## Supported conversions
 
@@ -34,6 +46,8 @@ No login, server, database, API calls, tag checks, or uploads. The pasted text s
 5. The website URL will be `https://YOUR-USERNAME.github.io/REPOSITORY-NAME/`.
 
 The site needs no build step, dependencies, external fonts or third-party scripts.
+
+To use a **single local HTML file**, download `booru-wiki-converter-v1.2-standalone.html` from the release. It includes the entire style and scripts, and can be opened directly from disk. Build it yourself with `python tools/build_standalone.py`. Clipboard read requires HTTPS or localhost and may not be available from local files; manual pasting is always possible.
 
 ## Test locally
 
@@ -64,9 +78,9 @@ Gelbooru:  [[formal_clothes]] [[Black_cross_tie]]
 ```
 
 The automated regression fixture is `tests/fixtures/cross-tie.dtext`.
-If your deployed page behaves differently, check the `v1.1.0` indicator at
+If your deployed page behaves differently, check the `v1.2.0` indicator at
 the bottom, update the repository files, and reload the page.
 
-## Image handling (v1.1.0)
+## Image handling (v1.1.0+)
 
 Images embedded using Danbooru `!post` / `!asset` are not portable to Gelbooru. The converter emits `[post]InsertPostID[/post]` instead of a misleading Danbooru URL or invalid cross-site ID. The user finds a suitable Gelbooru post, pastes its numeric ID, and publishes. External sources are preserved. Regression tests include the Blue Archive Subaru sample.
