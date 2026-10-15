@@ -5,6 +5,7 @@
  */
 
 const DANBOORU_BASE = 'https://danbooru.donmai.us';
+const GELBOORU_POST_PLACEHOLDER = '[post]InsertPostID[/post]';
 
 const cleanTag = (name) => name.trim().replace(/\s+/gu, '_');
 
@@ -88,14 +89,20 @@ export function convertDText(input, options = {}) {
     }).join('\n') + '\n';
   });
 
-  // Links to Danbooru media are NOT Gelbooru post IDs. Retain a working URL.
-  text = text.replace(/!\s*(post|asset)\s+#(\d+)(?:\s*:\s*([^\n]+))?/gi,
-    (_full, kind, id, caption) => {
-      stats.imageReferences++;
-      warn('media', 'Danbooru image embeds were replaced by links to the original media.');
-      const url = `${DANBOORU_BASE}/${kind.toLowerCase() === 'post' ? 'posts' : 'media_assets'}/${id}`;
-      return caption?.trim() ? `${caption.trim()} — ${url}` : url;
-    });
+  // Never reuse a Danbooru post or asset ID on Gelbooru. The contributor
+  // selects a suitable Gelbooru post and fills this visible, selectable slot.
+  const replaceImage = caption => {
+    stats.imageReferences++;
+    warn('media', 'Danbooru media references need a replacement Gelbooru post ID.');
+    return caption?.trim() ? `${caption.trim()} — ${GELBOORU_POST_PLACEHOLDER}` : GELBOORU_POST_PLACEHOLDER;
+  };
+  text = text.replace(/!\s*(?:post|asset)\s+#\d+(?:\s*:\s*([^\n]+))?/gi,
+    (_full, caption) => replaceImage(caption));
+
+  // Non-embedded post/asset references on their own line (often used in
+  // examples) are image slots too. In prose, "see post #123" is a citation.
+  text = text.replace(/^(\s*\*+\s+)?(?:post|asset)\s+#\d+(?:\s*:\s*(.+))?$/gmi,
+    (_full, prefix = '', caption) => `${prefix}${replaceImage(caption)}`);
 
   // HTML-style DText tags explicitly documented by Danbooru.
   const formatting = { b: 'b', strong: 'b', i: 'i', em: 'i', s: 's', strike: 's' };
@@ -182,6 +189,26 @@ export function convertDText(input, options = {}) {
     warn('anchors', 'Internal section links were converted to plain text.');
     return label;
   });
+
+  // URLs pointing to Danbooru posts/assets are image references, not
+  // usable Gelbooru post IDs. Keep genuine source links in the "External
+  // links" / "References" section instead of treating them as example images.
+  // Other external URLs (sources, character sites, artist sites...) are intact.
+  const mediaUrl = /https?:\/\/(?:danbooru\.donmai\.us|www\.donmai\.us)\/(?:posts|media_assets)\/\d+\/?(?:\?[a-z0-9_=&%.-]+)?(?:#[a-z0-9_-]+)?/gi;
+  let inSources = false;
+  text = text.split('\n').map(line => {
+    const heading = /^(?:\[b\]([^\n]+)\[\/b\]|\[h[1-5]\]([^\n]+)\[\/h[1-5]\])\s*$/i.exec(line.trim());
+    if (heading) {
+      inSources = /^(?:external links?|references?|sources?|liens? externes?|références?)\s*:?$/i.test((heading[1] || heading[2]).trim());
+      return line;
+    }
+    if (inSources) return line;
+    // A labeled DText/Markdown URL was already converted to "label (URL)".
+    // Make that an editable media slot without leaving the old Danbooru URL.
+    line = line.replace(/\((https?:\/\/(?:danbooru\.donmai\.us|www\.donmai\.us)\/(?:posts|media_assets)\/\d+\/?(?:\?[a-z0-9_=&%.-]+)?(?:#[a-z0-9_-]+)?)\)/gi,
+      () => `— ${replaceImage()}`);
+    return line.replace(mediaUrl, () => replaceImage());
+  }).join('\n');
 
   // Danbooru supports {{search|custom label}}, Gelbooru doesn't support '|'.
   // A search can contain *multiple tags*, so NEVER replace all its spaces

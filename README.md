@@ -1,6 +1,6 @@
 # Booru Wiki Converter
 
-A tiny, fully static **Danbooru DText → Gelbooru Wiki** converter. Suitable for GitHub Pages and tablets/phones. The interface is available in English and French.
+Version **1.1.0**. A tiny, fully static **Danbooru DText → Gelbooru Wiki** converter. Suitable for GitHub Pages and tablets/phones. The interface is available in English and French.
 
 ## Use
 
@@ -18,11 +18,12 @@ No login, server, database, API calls, tag checks, or uploads. The pasted text s
 - DText lists (including nested `*`, `**`, `***`) → textual lists; optional bullet/arrow markers.
 - Bold, italic, strikethrough, spoilers, quotes; ordinary text and paragraphs.
 - Collapsible blocks expanded into visible text; anchor-only tables of contents omitted with a notice.
-- Danbooru `!post #id` and `!asset #id` image embeds → **Danbooru URLs**, never reused as Gelbooru IDs.
+- Danbooru `!post #id`, `!asset #id`, standalone post references and direct Danbooru post/asset URLs → **`[post]InsertPostID[/post]`**, to fill with a suitable Gelbooru post ID. Captions are preserved.
+- External Danbooru post links inside **External links**, **Sources**, or **References** sections are retained as citations; other external source URLs remain untouched.
 - Selected link formats and simple DText tables converted to readable text.
 - Unsupported formatting is simplified conservatively, with conversion notes.
 
-**Not included:** No checks for tag existence, aliases, ratings or post matches; no attempts to translate Danbooru post IDs to Gelbooru post IDs. Conversion does not ensure compliance with Gelbooru editorial guidelines. Some rare or nested DText constructs may still require manual edits.
+**Not included:** No checks for tag existence, aliases, ratings or post matches; no attempts to translate Danbooru post IDs to Gelbooru post IDs. **Replace all `InsertPostID` placeholders with real Gelbooru post IDs before publishing.** Conversion does not ensure compliance with Gelbooru editorial guidelines. Some rare or nested DText constructs may still require manual edits.
 
 ## Deploy on GitHub Pages
 
@@ -51,4 +52,21 @@ node --test
 
 ## Licensing
 
-MIT license (see `LICENSE`). No Danbooru/Gelbooru code or content is bundled.
+MIT license (see `LICENSE`). No Danbooru/Gelbooru application code is bundled; test fixtures contain short wiki text excerpts used for regression tests.
+
+## Wiki link normalization verification
+
+Gelbooru requires underscores inside wiki links (but **not** in regular prose):
+
+```text
+Danbooru:  [[formal clothes]] [[Black cross tie]]
+Gelbooru:  [[formal_clothes]] [[Black_cross_tie]]
+```
+
+The automated regression fixture is `tests/fixtures/cross-tie.dtext`.
+If your deployed page behaves differently, check the `v1.1.0` indicator at
+the bottom, update the repository files, and reload the page.
+
+## Image handling (v1.1.0)
+
+Images embedded using Danbooru `!post` / `!asset` are not portable to Gelbooru. The converter emits `[post]InsertPostID[/post]` instead of a misleading Danbooru URL or invalid cross-site ID. The user finds a suitable Gelbooru post, pastes its numeric ID, and publishes. External sources are preserved. Regression tests include the Blue Archive Subaru sample.

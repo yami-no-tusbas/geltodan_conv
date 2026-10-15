@@ -1,4 +1,4 @@
-import { convertDText } from './converter.js';
+import { convertDText } from './converter.js?v=1.1.0';
 
 const $ = id => document.getElementById(id);
 const elements = {
@@ -16,7 +16,7 @@ const translations = {
     headingLabel: 'Headings', headingCompact: 'Compact (bold)', headingLarge: 'Gelbooru heading tags',
     listLabel: 'Lists', listStars: 'Asterisks (*, **, ***)', listBullets: 'Bullets and arrows',
     sourceTitle: 'Danbooru source', sourceDescription: "Copy from Danbooru’s wiki editor.",
-    resultTitle: 'Gelbooru result', resultDescription: 'Ready to paste into Gelbooru’s wiki editor.',
+    resultTitle: 'Gelbooru result', resultDescription: 'Replace InsertPostID with real Gelbooru post IDs before publishing.',
     paste: 'Paste', clear: 'Clear', copy: 'Copy',
     pasteTitle: 'Paste from clipboard', clearTitle: 'Clear both fields', copyTitle: 'Copy the full converted wiki',
     sourcePlaceholder: 'Paste Danbooru DText here…', resultPlaceholder: 'The converted wiki will appear here…',
@@ -34,7 +34,7 @@ const translations = {
     headingLabel: 'Titres', headingCompact: 'Compact (gras)', headingLarge: 'Balises de titre Gelbooru',
     listLabel: 'Listes', listStars: 'Astérisques (*, **, ***)', listBullets: 'Puces et flèches',
     sourceTitle: 'Source Danbooru', sourceDescription: 'Copiez depuis l’éditeur wiki Danbooru.',
-    resultTitle: 'Résultat Gelbooru', resultDescription: 'Prêt à coller dans l’éditeur wiki Gelbooru.',
+    resultTitle: 'Résultat Gelbooru', resultDescription: 'Remplacez InsertPostID par les vrais IDs Gelbooru avant publication.',
     paste: 'Coller', clear: 'Effacer', copy: 'Copier',
     pasteTitle: 'Coller depuis le presse-papiers', clearTitle: 'Effacer les deux champs', copyTitle: 'Copier tout le wiki converti',
     sourcePlaceholder: 'Collez le DText Danbooru ici…', resultPlaceholder: 'Le wiki converti apparaîtra ici…',
@@ -53,7 +53,7 @@ const warningTranslations = {
     toc: 'Sommaire Danbooru retiré : ses ancres ne fonctionneraient pas sur Gelbooru.',
     expand: 'Blocs repliables transformés en texte visible.',
     tables: 'Tableaux convertis en lignes de texte ; la disposition des cellules fusionnées peut être perdue.',
-    media: 'Images Danbooru remplacées par des liens vers les médias d’origine.',
+    media: 'Références aux images Danbooru remplacées par [post]InsertPostID[/post] : choisissez un ID de post Gelbooru.',
     'unsupported-style': 'Soulignement et styles de notes simplifiés en texte ordinaire.',
     anchors: 'Ancres et liens internes à des sections supprimés ou simplifiés.',
     annotations: 'Notes Danbooru conservées en texte ordinaire.',
